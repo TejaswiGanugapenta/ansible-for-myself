@@ -1,0 +1,41 @@
+---
+- name: This playbook installs http on web servers
+  hosts: all
+  become: true
+  tasks:
+  - name: install packages httpd
+    yum:
+      name: httpd
+      state: installed
+    when: ansible_os_family == "RedHat" 
+    tags: install_package
+
+  - name: start the service
+    service:
+      name: httpd
+      state: started
+    when: ansible_os_family == "RedHat"
+    tags: start_service
+    ignore_errors: yes
+
+  - name: install apache2
+    apt:
+      name: apache2
+      state: present
+    when: ansible_os_family == "Debian"
+    tags: install_package
+
+  - name: start service
+    service:
+      name: apache2
+      state: started
+    when: ansible_os_family == "Debian"  
+    tags: start_service
+    ignore_errors: yes
+
+  - name: copy index.html
+    copy:
+      src: /opt/ansible/index.html
+      dest: /var/www/html
+      mode: 0666      
+    tags: copy_file   

@@ -1,0 +1,70 @@
+---
+- name: This playbook installs http on web servers
+  hosts: all
+  become: true
+  vars:
+    port: 8082      
+  tasks:
+  - name: install packages httpd
+    yum:
+      name: httpd
+      state: installed
+    when: ansible_os_family == "RedHat" 
+    notify: start the service
+   
+  - name: install apache2
+    apt:
+      name: apache2
+      state: present
+    when: ansible_os_family == "Debian"
+    notify: start service
+
+  - name: copy index.html
+    copy:
+      src: /opt/ansible/index.html
+      dest: /var/www/html
+      mode: 0666      
+   
+  - name: Ensure the default Apache port is "{{ port }}"
+    lineinfile:
+      path: /etc/httpd/conf/httpd.conf
+      regexp: '^Listen '
+      insertafter: '^#Listen '
+      line: Listen "{{ port }}"
+    when: ansible_os_family == "RedHat"
+    notify: restart the service
+
+  - name: Ensure the default Apache port is "{{ port }}"
+    lineinfile:
+      path: /etc/apache2/ports.conf
+      regexp: '^Listen '
+      insertafter: "# /etc/apache2/sites-enabled/000-default.conf"
+      line: Listen "{{ port }}"
+    when: ansible_os_family == "Debian"
+    notify: restart service
+
+  handlers:  
+  - name: start the service
+    service:
+      name: httpd
+      state: started
+    when: ansible_os_family == "RedHat"
+
+  - name: start service
+    service:
+      name: apache2
+      state: started
+    when: ansible_os_family == "Debian"  
+
+  - name: restart the service
+    service:
+      name: httpd
+      state: restarted
+    when: ansible_os_family == "RedHat"
+
+  - name: restart service
+    service:
+      name: apache2
+      state: restarted
+    when: ansible_os_family == "Debian"
+

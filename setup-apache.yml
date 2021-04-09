@@ -1,0 +1,6 @@
+---
+- name: This playbook installs http on web servers
+  hosts: all
+  become: true
+  roles:
+    - setup-apache      
